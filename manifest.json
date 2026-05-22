@@ -1,0 +1,13 @@
+{
+  "name": "TETRIS",
+  "short_name": "TETRIS",
+  "description": "Neon arcade Tetris for mobile",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#05050f",
+  "theme_color": "#05050f",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
