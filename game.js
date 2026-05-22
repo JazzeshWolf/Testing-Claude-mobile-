@@ -29,10 +29,7 @@ const DIFFICULTIES = {
 // SOUND ENGINE
 // =========================================================
 class SoundEngine {
-  constructor() {
-    this.enabled = true;
-    this._ctx = null;
-  }
+  constructor() { this.enabled = true; this._ctx = null; }
   _getCtx() {
     if (!this._ctx) this._ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (this._ctx.state === 'suspended') this._ctx.resume();
@@ -42,24 +39,21 @@ class SoundEngine {
     if (!this.enabled) return;
     try {
       const ctx = this._getCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = type;
       osc.frequency.setValueAtTime(freqStart, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(freqEnd, ctx.currentTime + duration / 1000);
       gain.gain.setValueAtTime(gainVal, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration / 1000);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + duration / 1000 + 0.01);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + duration / 1000 + 0.01);
     } catch (_) {}
   }
   _tone(type, freq, duration, gainVal = 0.15, delay = 0) {
     if (!this.enabled) return;
     try {
       const ctx = this._getCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.type = type; osc.frequency.value = freq;
       const t = ctx.currentTime + delay;
@@ -68,184 +62,112 @@ class SoundEngine {
       osc.start(t); osc.stop(t + duration / 1000 + 0.01);
     } catch (_) {}
   }
-  rotate()          { this._play('sine',    440, 660, 80, 0.12); }
-  move()            { this._play('sine',    320, 340, 40, 0.06); }
-  lock()            { this._play('square',  180, 80,  120, 0.14); }
-  hardDrop()        { this._play('sawtooth',120, 40,  100, 0.22); }
-  uiClick()         { this._play('sine',    600, 500, 60,  0.1); }
+  rotate()   { this._play('sine',    440, 660, 80,  0.12); }
+  move()     { this._play('sine',    320, 340, 40,  0.06); }
+  lock()     { this._play('square',  180, 80,  120, 0.14); }
+  hardDrop() { this._play('sawtooth',120, 40,  100, 0.22); }
+  uiClick()  { this._play('sine',    600, 500, 60,  0.1);  }
   lineClear(count) {
     const notes = [440, 550, 660, 770];
     for (let i = 0; i < count; i++) this._tone('sine', notes[i] || 880, 180, 0.18, i * 0.08);
   }
-  levelUp() {
-    [330, 440, 550, 660, 880].forEach((f, i) => this._tone('sine', f, 140, 0.2, i * 0.09));
-  }
-  gameOver() {
-    [440, 370, 330, 220].forEach((f, i) => this._tone('square', f, 200, 0.15, i * 0.18));
-  }
-  toggle() {
-    this.enabled = !this.enabled;
-    return this.enabled;
-  }
+  levelUp()  { [330,440,550,660,880].forEach((f,i) => this._tone('sine',f,140,0.2,i*0.09)); }
+  gameOver() { [440,370,330,220].forEach((f,i) => this._tone('square',f,200,0.15,i*0.18)); }
+  toggle()   { this.enabled = !this.enabled; return this.enabled; }
 }
 
 // =========================================================
 // HAPTIC ENGINE
 // =========================================================
 class HapticEngine {
-  _vibe(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+  _vibe(p) { if (navigator.vibrate) navigator.vibrate(p); }
   light()   { this._vibe(10); }
   medium()  { this._vibe(25); }
-  heavy()   { this._vibe([30, 10, 30]); }
-  success() { this._vibe([10, 20, 10, 20, 40]); }
+  heavy()   { this._vibe([30,10,30]); }
+  success() { this._vibe([10,20,10,20,40]); }
 }
 
 // =========================================================
 // FX ENGINE
 // =========================================================
 class FXEngine {
-  constructor(layer, canvas) {
-    this._layer  = layer;
-    this._canvas = canvas;
-  }
+  constructor(layer, canvas) { this._layer = layer; this._canvas = canvas; }
   scorePopup(x, y, text, color) {
     const el = document.createElement('div');
     el.className = 'score-popup';
-    el.textContent = text;
-    el.style.left  = x + 'px';
-    el.style.top   = y + 'px';
-    el.style.color = color;
+    el.textContent = text; el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color;
     this._layer.appendChild(el);
     el.addEventListener('animationend', () => el.remove(), { once: true });
   }
   lineClearFlash(rows, cellH) {
     rows.forEach(row => {
       const el = document.createElement('div');
-      el.className = 'line-flash';
-      el.style.top    = (row * cellH) + 'px';
-      el.style.height = cellH + 'px';
+      el.className = 'line-flash'; el.style.top = (row * cellH) + 'px'; el.style.height = cellH + 'px';
       this._layer.appendChild(el);
       el.addEventListener('animationend', () => el.remove(), { once: true });
     });
   }
-  screenShake() {
-    const el = this._canvas.parentElement;
-    el.classList.remove('shaking');
-    void el.offsetWidth;
-    el.classList.add('shaking');
-    el.addEventListener('animationend', () => el.classList.remove('shaking'), { once: true });
+  _toggleAnim(el, cls) {
+    el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+    el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
   }
-  levelUpPulse() {
-    const el = this._canvas.parentElement;
-    el.classList.remove('level-up-anim');
-    void el.offsetWidth;
-    el.classList.add('level-up-anim');
-    el.addEventListener('animationend', () => el.classList.remove('level-up-anim'), { once: true });
-  }
-  comboFlash() {
-    const el = document.getElementById('combo-count');
-    if (!el) return;
-    el.classList.remove('combo-anim');
-    void el.offsetWidth;
-    el.classList.add('combo-anim');
-    el.addEventListener('animationend', () => el.classList.remove('combo-anim'), { once: true });
-  }
+  screenShake()  { this._toggleAnim(this._canvas.parentElement, 'shaking'); }
+  levelUpPulse() { this._toggleAnim(this._canvas.parentElement, 'level-up-anim'); }
+  comboFlash()   { const el = document.getElementById('combo-count'); if (el) this._toggleAnim(el, 'combo-anim'); }
 }
 
 // =========================================================
 // RENDERER
 // =========================================================
 class Renderer {
-  constructor(canvas, cell) {
-    this.canvas = canvas;
-    this.ctx    = canvas.getContext('2d');
-    this.cell   = cell;
-  }
-  clear() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  }
+  constructor(canvas, cell) { this.canvas = canvas; this.ctx = canvas.getContext('2d'); this.cell = cell; }
+  clear() { this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); }
   drawGrid() {
     const { ctx, cell } = this;
-    ctx.strokeStyle = 'rgba(100,120,255,0.035)';
-    ctx.lineWidth   = 0.5;
-    for (let x = 0; x <= COLS; x++) {
-      ctx.beginPath(); ctx.moveTo(x * cell, 0); ctx.lineTo(x * cell, ROWS * cell); ctx.stroke();
-    }
-    for (let y = 0; y <= ROWS; y++) {
-      ctx.beginPath(); ctx.moveTo(0, y * cell); ctx.lineTo(COLS * cell, y * cell); ctx.stroke();
-    }
+    ctx.strokeStyle = 'rgba(100,120,255,0.035)'; ctx.lineWidth = 0.5;
+    for (let x = 0; x <= COLS; x++) { ctx.beginPath(); ctx.moveTo(x*cell,0); ctx.lineTo(x*cell,ROWS*cell); ctx.stroke(); }
+    for (let y = 0; y <= ROWS; y++) { ctx.beginPath(); ctx.moveTo(0,y*cell); ctx.lineTo(COLS*cell,y*cell); ctx.stroke(); }
   }
   drawBlock(x, y, color, glow, alpha = 1) {
     const { ctx, cell } = this;
-    const px = x * cell, py = y * cell;
-    const s  = cell - 1;
-    ctx.save();
-    ctx.globalAlpha = alpha;
+    const px = x * cell, py = y * cell, s = cell - 1;
+    ctx.save(); ctx.globalAlpha = alpha;
     if (glow) { ctx.shadowColor = glow; ctx.shadowBlur = 8; }
-    ctx.fillStyle = color;
-    ctx.fillRect(px + 0.5, py + 0.5, s, s);
+    ctx.fillStyle = color; ctx.fillRect(px+0.5, py+0.5, s, s);
     ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.fillRect(px + 1, py + 1, s - 2, Math.floor(s * 0.28));
-    ctx.fillStyle = 'rgba(255,255,255,0.14)';
-    ctx.fillRect(px + 1, py + 1, Math.floor(s * 0.18), s - 2);
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillRect(px + 1, py + s - Math.floor(s * 0.22), s - 2, Math.floor(s * 0.22));
+    ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.fillRect(px+1, py+1, s-2, Math.floor(s*0.28));
+    ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.fillRect(px+1, py+1, Math.floor(s*0.18), s-2);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';       ctx.fillRect(px+1, py+s-Math.floor(s*0.22), s-2, Math.floor(s*0.22));
     ctx.restore();
   }
   drawGhost(x, y, color) {
     const { ctx, cell } = this;
-    ctx.save();
-    ctx.globalAlpha   = 0.22;
-    ctx.strokeStyle   = color;
-    ctx.lineWidth     = 1.5;
-    ctx.strokeRect(x * cell + 1.5, y * cell + 1.5, cell - 3, cell - 3);
-    ctx.restore();
+    ctx.save(); ctx.globalAlpha = 0.22; ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.strokeRect(x*cell+1.5, y*cell+1.5, cell-3, cell-3); ctx.restore();
   }
   drawBoard(board) {
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const cell = board[r][c];
-        if (cell) this.drawBlock(c, r, cell.color, cell.glow);
-      }
-    }
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++) { const cell = board[r][c]; if (cell) this.drawBlock(c, r, cell.color, cell.glow); }
   }
   drawPiece(piece, ghostY) {
-    piece.shape.forEach((row, dr) => {
-      row.forEach((v, dc) => {
-        if (!v) return;
-        this.drawGhost(piece.x + dc, ghostY + dr, piece.color);
-      });
-    });
-    piece.shape.forEach((row, dr) => {
-      row.forEach((v, dc) => {
-        if (!v) return;
-        this.drawBlock(piece.x + dc, piece.y + dr, piece.color, piece.glow);
-      });
-    });
+    piece.shape.forEach((row, dr) => row.forEach((v, dc) => { if (v) this.drawGhost(piece.x+dc, ghostY+dr, piece.color); }));
+    piece.shape.forEach((row, dr) => row.forEach((v, dc) => { if (v) this.drawBlock(piece.x+dc, piece.y+dr, piece.color, piece.glow); }));
   }
   drawPreview(canvas, piece) {
-    const ctx  = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!piece) return;
-    const cell = Math.floor(Math.min(canvas.width / 4, canvas.height / 4));
-    const shape = piece.shape;
-    const rows  = shape.length, cols = shape[0].length;
-    const ox    = Math.floor((canvas.width  - cols * cell) / 2);
-    const oy    = Math.floor((canvas.height - rows * cell) / 2);
-    shape.forEach((row, r) => {
-      row.forEach((v, c) => {
-        if (!v) return;
-        const px = ox + c * cell, py = oy + r * cell, s = cell - 1;
-        ctx.save();
-        ctx.shadowColor = piece.glow; ctx.shadowBlur = 6;
-        ctx.fillStyle   = piece.color;
-        ctx.fillRect(px, py, s, s);
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
-        ctx.fillRect(px, py, s, Math.floor(s * 0.28));
-        ctx.restore();
-      });
-    });
+    const cell = Math.floor(Math.min(canvas.width/4, canvas.height/4));
+    const shape = piece.shape, rows = shape.length, cols = shape[0].length;
+    const ox = Math.floor((canvas.width - cols*cell)/2), oy = Math.floor((canvas.height - rows*cell)/2);
+    shape.forEach((row, r) => row.forEach((v, c) => {
+      if (!v) return;
+      const px = ox+c*cell, py = oy+r*cell, s = cell-1;
+      ctx.save(); ctx.shadowColor = piece.glow; ctx.shadowBlur = 6;
+      ctx.fillStyle = piece.color; ctx.fillRect(px, py, s, s);
+      ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(px, py, s, Math.floor(s*0.28));
+      ctx.restore();
+    }));
   }
 }
 
@@ -254,34 +176,25 @@ class Renderer {
 // =========================================================
 class InputManager {
   constructor(canvas, handlers) {
-    this._h      = handlers;
-    this._cell   = 0;
-    this._tx = 0; this._ty = 0; this._tt = 0;
-    this._fingers = 0;
-    this._lpTimer = null;
-    this._lpActive = false;
-    this._bound = {};
-
-    this._bound.kd = this._onKeyDown.bind(this);
-    this._bound.ts = this._onTouchStart.bind(this);
-    this._bound.tm = this._onTouchMove.bind(this);
-    this._bound.te = this._onTouchEnd.bind(this);
-
+    this._h = handlers; this._cell = 0;
+    this._tx = 0; this._ty = 0; this._tt = 0; this._fingers = 0;
+    this._lpTimer = null; this._lpActive = false;
+    this._bound = {
+      kd: this._onKeyDown.bind(this), ts: this._onTouchStart.bind(this),
+      tm: this._onTouchMove.bind(this), te: this._onTouchEnd.bind(this)
+    };
     document.addEventListener('keydown', this._bound.kd);
     canvas.addEventListener('touchstart',  this._bound.ts, { passive: false });
     canvas.addEventListener('touchmove',   this._bound.tm, { passive: false });
     canvas.addEventListener('touchend',    this._bound.te, { passive: false });
     canvas.addEventListener('touchcancel', this._bound.te, { passive: false });
-
     this._canvas = canvas;
   }
   setCell(cell) { this._cell = cell; }
   destroy() {
     document.removeEventListener('keydown', this._bound.kd);
-    this._canvas.removeEventListener('touchstart',  this._bound.ts);
-    this._canvas.removeEventListener('touchmove',   this._bound.tm);
-    this._canvas.removeEventListener('touchend',    this._bound.te);
-    this._canvas.removeEventListener('touchcancel', this._bound.te);
+    ['touchstart','touchmove','touchend','touchcancel'].forEach((ev, i) =>
+      this._canvas.removeEventListener(ev, [this._bound.ts,this._bound.tm,this._bound.te,this._bound.te][i]));
     if (this._lpTimer) clearTimeout(this._lpTimer);
   }
   _onKeyDown(e) {
@@ -301,49 +214,29 @@ class InputManager {
     }
   }
   _onTouchStart(e) {
-    e.preventDefault();
-    this._fingers = e.touches.length;
-    const t = e.touches[0];
-    this._tx = t.clientX; this._ty = t.clientY;
-    this._tt = Date.now();
+    e.preventDefault(); this._fingers = e.touches.length;
+    const t = e.touches[0]; this._tx = t.clientX; this._ty = t.clientY; this._tt = Date.now();
     this._lpActive = false;
     if (this._lpTimer) clearTimeout(this._lpTimer);
-    this._lpTimer = setTimeout(() => {
-      this._lpActive = true;
-      this._h.longPressStart && this._h.longPressStart();
-    }, 350);
+    this._lpTimer = setTimeout(() => { this._lpActive = true; this._h.longPressStart && this._h.longPressStart(); }, 350);
   }
-  _onTouchMove(e) {
-    e.preventDefault();
-    if (this._lpTimer) { clearTimeout(this._lpTimer); this._lpTimer = null; }
-  }
+  _onTouchMove(e) { e.preventDefault(); if (this._lpTimer) { clearTimeout(this._lpTimer); this._lpTimer = null; } }
   _onTouchEnd(e) {
     e.preventDefault();
     if (this._lpTimer) { clearTimeout(this._lpTimer); this._lpTimer = null; }
-    if (this._lpActive) {
-      this._lpActive = false;
-      this._h.longPressEnd && this._h.longPressEnd();
-      return;
-    }
-    const dt  = Date.now() - this._tt;
-    const dx  = (e.changedTouches[0]?.clientX ?? this._tx) - this._tx;
-    const dy  = (e.changedTouches[0]?.clientY ?? this._ty) - this._ty;
-    const adx = Math.abs(dx), ady = Math.abs(dy);
-    const threshold = this._cell * 0.8;
-
+    if (this._lpActive) { this._lpActive = false; this._h.longPressEnd && this._h.longPressEnd(); return; }
+    const dt = Date.now() - this._tt;
+    const dx = (e.changedTouches[0]?.clientX ?? this._tx) - this._tx;
+    const dy = (e.changedTouches[0]?.clientY ?? this._ty) - this._ty;
+    const adx = Math.abs(dx), ady = Math.abs(dy), threshold = this._cell * 0.8;
     if (dt < 250 && adx < threshold && ady < threshold) {
-      this._h.rotate(this._fingers >= 2 ? -1 : 1);
-      return;
+      this._h.rotate(this._fingers >= 2 ? -1 : 1); return;
     }
     if (adx > ady) {
       const steps = Math.round(adx / (this._cell || 24));
-      for (let i = 0; i < Math.max(1, steps); i++) {
-        dx < 0 ? this._h.moveLeft() : this._h.moveRight();
-      }
+      for (let i = 0; i < Math.max(1, steps); i++) dx < 0 ? this._h.moveLeft() : this._h.moveRight();
     } else if (ady > threshold) {
-      const velocity = ady / Math.max(dt, 1);
-      if (velocity > 0.8) this._h.hardDrop();
-      else                this._h.softDrop();
+      if (ady / Math.max(dt, 1) > 0.8) this._h.hardDrop(); else this._h.softDrop();
     }
   }
 }
@@ -353,119 +246,79 @@ class InputManager {
 // =========================================================
 class Game {
   constructor(diffKey) {
-    this.diff  = DIFFICULTIES[diffKey] || DIFFICULTIES.normal;
+    this.diff = DIFFICULTIES[diffKey] || DIFFICULTIES.normal;
     this.board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-    this._bag  = [];
+    this._bag = [];
     this.score = 0; this.level = 1; this.lines = 0; this.combo = 0;
     this.heldPiece = null; this.canHold = true;
-    this.current = this._spawn();
-    this.next    = this._spawn();
+    this.current = this._spawn(); this.next = this._spawn();
     this.dropInterval = this.diff.speed;
   }
   _nextId() {
-    if (!this._bag.length) {
-      this._bag = [...PIECE_KEYS].sort(() => Math.random() - 0.5);
-    }
+    if (!this._bag.length) this._bag = [...PIECE_KEYS].sort(() => Math.random() - 0.5);
     return this._bag.shift();
   }
   _spawn(id) {
-    const key = id || this._nextId();
-    const t   = TETROMINOES[key];
+    const key = id || this._nextId(), t = TETROMINOES[key];
     return { id: key, shape: t.shape.map(r => [...r]), color: t.color, glow: t.glow,
              x: Math.floor((COLS - t.shape[0].length) / 2), y: 0 };
   }
   collides(piece, dx = 0, dy = 0, shape) {
     const s = shape || piece.shape;
-    for (let r = 0; r < s.length; r++) {
+    for (let r = 0; r < s.length; r++)
       for (let c = 0; c < s[r].length; c++) {
         if (!s[r][c]) continue;
         const nx = piece.x + c + dx, ny = piece.y + r + dy;
         if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
         if (ny >= 0 && this.board[ny][nx]) return true;
       }
-    }
     return false;
   }
-  ghostY() {
-    let dy = 0;
-    while (!this.collides(this.current, 0, dy + 1)) dy++;
-    return this.current.y + dy;
-  }
+  ghostY() { let dy = 0; while (!this.collides(this.current, 0, dy+1)) dy++; return this.current.y + dy; }
   rotate(dir) {
-    const s = this.current.shape;
-    const n = s.length;
-    const ns = s.map((row, r) => row.map((_, c) => dir === 1 ? s[n - 1 - c][r] : s[c][n - 1 - r]));
-    for (const kick of [0, 1, -1, 2, -2]) {
-      if (!this.collides(this.current, kick, 0, ns)) {
-        this.current.shape = ns;
-        this.current.x += kick;
-        return true;
-      }
+    const s = this.current.shape, n = s.length;
+    const ns = s.map((row, r) => row.map((_, c) => dir === 1 ? s[n-1-c][r] : s[c][n-1-r]));
+    for (const kick of [0,1,-1,2,-2]) {
+      if (!this.collides(this.current, kick, 0, ns)) { this.current.shape = ns; this.current.x += kick; return true; }
     }
     return false;
   }
-  move(dx) {
-    if (!this.collides(this.current, dx, 0)) { this.current.x += dx; return true; }
-    return false;
-  }
-  softDrop() {
-    if (!this.collides(this.current, 0, 1)) { this.current.y++; this.score += 1; return true; }
-    return false;
-  }
-  hardDrop() {
-    let dropped = 0;
-    while (!this.collides(this.current, 0, 1)) { this.current.y++; dropped++; }
-    this.score += dropped * 2;
-    return dropped;
-  }
+  move(dx) { if (!this.collides(this.current, dx, 0)) { this.current.x += dx; return true; } return false; }
+  softDrop() { if (!this.collides(this.current, 0, 1)) { this.current.y++; this.score += 1; return true; } return false; }
+  hardDrop() { let d = 0; while (!this.collides(this.current, 0, 1)) { this.current.y++; d++; } this.score += d*2; return d; }
   hold() {
     if (!this.canHold) return false;
-    const prevHeld = this.heldPiece;
+    const prev = this.heldPiece;
     this.heldPiece = this._spawn(this.current.id);
-    this.current   = prevHeld ? this._spawn(prevHeld.id) : this.next;
-    if (!prevHeld) this.next = this._spawn();
-    this.canHold   = false;
-    return true;
+    this.current = prev ? this._spawn(prev.id) : this.next;
+    if (!prev) this.next = this._spawn();
+    this.canHold = false; return true;
   }
   lock() {
-    const p = this.current;
-    let gameOver = false;
-    p.shape.forEach((row, dr) => {
-      row.forEach((v, dc) => {
-        if (!v) return;
-        const ny = p.y + dr;
-        if (ny < 0) { gameOver = true; return; }
-        this.board[ny][p.x + dc] = { color: p.color, glow: p.glow };
-      });
-    });
+    const p = this.current; let gameOver = false;
+    p.shape.forEach((row, dr) => row.forEach((v, dc) => {
+      if (!v) return; const ny = p.y + dr;
+      if (ny < 0) { gameOver = true; return; }
+      this.board[ny][p.x + dc] = { color: p.color, glow: p.glow };
+    }));
     if (gameOver) return { gameOver: true, cleared: null };
     const cleared = this._clearLines();
-    this.current  = this.next;
-    this.next     = this._spawn();
-    this.canHold  = true;
-    if (this.collides(this.current, 0, 0)) return { gameOver: true, cleared };
+    this.current = this.next; this.next = this._spawn(); this.canHold = true;
+    if (this.collides(this.current)) return { gameOver: true, cleared };
     return { gameOver: false, cleared };
   }
   _clearLines() {
     const full = [];
-    for (let r = 0; r < ROWS; r++) {
-      if (this.board[r].every(c => c)) full.push(r);
-    }
+    for (let r = 0; r < ROWS; r++) if (this.board[r].every(c => c)) full.push(r);
     if (!full.length) { this.combo = 0; return null; }
     this.combo++;
-    const count   = full.length;
-    const combo_b = this.combo > 1 ? (this.combo - 1) * 50 * this.diff.mult : 0;
-    const gained  = Math.floor(LINE_SCORES[count] * this.diff.mult * this.level + combo_b);
-    this.score   += gained;
-    this.lines   += count;
-    const oldLevel = this.level;
-    this.level     = 1 + Math.floor(this.lines / 10);
-    const leveled  = this.level > oldLevel;
-    if (leveled) this.dropInterval = Math.max(60, this.diff.speed - (this.level - 1) * this.diff.speedInc);
-    full.forEach(r => {
-      this.board.splice(r, 1);
-      this.board.unshift(Array(COLS).fill(null));
-    });
+    const count = full.length;
+    const gained = Math.floor(LINE_SCORES[count] * this.diff.mult * this.level + (this.combo > 1 ? (this.combo-1)*50*this.diff.mult : 0));
+    this.score += gained; this.lines += count;
+    const oldLevel = this.level; this.level = 1 + Math.floor(this.lines / 10);
+    const leveled = this.level > oldLevel;
+    if (leveled) this.dropInterval = Math.max(60, this.diff.speed - (this.level-1)*this.diff.speedInc);
+    full.forEach(r => { this.board.splice(r, 1); this.board.unshift(Array(COLS).fill(null)); });
     return { rows: full, count, leveledUp: leveled, combo: this.combo, gained };
   }
 }
@@ -479,25 +332,18 @@ class App {
     this._haptic  = new HapticEngine();
     this._hiscore = parseInt(localStorage.getItem('tetris-hiscore') || '0', 10);
     this._selectedDiff = null;
-    this._game    = null;
-    this._renderer= null;
-    this._fx      = null;
-    this._input   = null;
-    this._raf     = null;
-    this._lastTs  = 0;
-    this._dropAcc = 0;
-    this._paused  = false;
-    this._softDropping = false;
-
+    this._game = null; this._renderer = null; this._fx = null; this._input = null;
+    this._raf = null; this._lastTs = 0; this._dropAcc = 0;
+    this._paused = false; this._softDropping = false;
     this._initUI();
+    this._initGameControls();
     this._updateMenuHiscore();
   }
 
   _initUI() {
     document.getElementById('btn-play').addEventListener('click',  () => { this._sound.uiClick(); this._showScreen('screen-difficulty'); });
     document.getElementById('btn-sound').addEventListener('click', () => { const on = this._sound.toggle(); document.getElementById('btn-sound').textContent = on ? '🔊' : '🔇'; });
-
-    document.getElementById('btn-back').addEventListener('click', () => { this._sound.uiClick(); this._showScreen('screen-menu'); });
+    document.getElementById('btn-back').addEventListener('click',  () => { this._sound.uiClick(); this._showScreen('screen-menu'); });
     document.querySelectorAll('.diff-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.diff-card').forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-pressed','false'); });
@@ -507,12 +353,7 @@ class App {
         this._sound.uiClick(); this._haptic.light();
       });
     });
-    document.getElementById('btn-start').addEventListener('click', () => {
-      if (!this._selectedDiff) return;
-      this._sound.uiClick();
-      this._startGame(this._selectedDiff);
-    });
-
+    document.getElementById('btn-start').addEventListener('click', () => { if (!this._selectedDiff) return; this._sound.uiClick(); this._startGame(this._selectedDiff); });
     document.getElementById('btn-pause').addEventListener('click', () => this._togglePause());
     document.getElementById('btn-resume').addEventListener('click',     () => { this._sound.uiClick(); this._togglePause(); });
     document.getElementById('btn-restart').addEventListener('click',    () => { this._sound.uiClick(); this._startGame(this._selectedDiff); });
@@ -521,48 +362,72 @@ class App {
     document.getElementById('btn-go-menu').addEventListener('click',    () => { this._sound.uiClick(); this._showScreen('screen-menu'); this._hideOverlay('overlay-gameover'); });
   }
 
-  _showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'screen-enter'));
-    const el = document.getElementById(id);
-    el.classList.add('active');
-    void el.offsetWidth;
-    el.classList.add('screen-enter');
+  _initGameControls() {
+    const makeDAS = (fn) => {
+      let t = null, iv = null;
+      const start = () => { fn(); t = setTimeout(() => { iv = setInterval(fn, 55); }, 170); };
+      const stop  = () => { clearTimeout(t); clearInterval(iv); };
+      return { start, stop };
+    };
+    const left  = makeDAS(() => { if (this._game && !this._paused && this._game.move(-1)) { this._sound.move(); this._haptic.light(); } });
+    const right = makeDAS(() => { if (this._game && !this._paused && this._game.move( 1)) { this._sound.move(); this._haptic.light(); } });
+    const bind = (id, down, up) => {
+      const el = document.getElementById(id); if (!el) return;
+      const dn = (e) => { e.preventDefault(); el.classList.add('pressed'); down(); };
+      const up_ = (e) => { e.preventDefault(); el.classList.remove('pressed'); up && up(); };
+      el.addEventListener('pointerdown', dn); el.addEventListener('pointerup', up_);
+      el.addEventListener('pointerleave', up_); el.addEventListener('pointercancel', up_);
+    };
+    bind('ctrl-left',   left.start, left.stop);
+    bind('ctrl-right',  right.start, right.stop);
+    bind('ctrl-rotate', () => { if (this._game && !this._paused && this._game.rotate(1)) { this._sound.rotate(); this._haptic.light(); } }, null);
+    bind('ctrl-soft',   () => { if (this._game && !this._paused) this._softDropping = true; }, () => { this._softDropping = false; });
+    bind('ctrl-hard',   () => { if (this._game && !this._paused) this._doHardDrop(); }, null);
   }
-  _showOverlay(id)  { document.getElementById(id).classList.remove('hidden'); }
-  _hideOverlay(id)  { document.getElementById(id).classList.add('hidden'); }
+
+  _showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active','screen-enter'));
+    const el = document.getElementById(id);
+    el.classList.add('active'); void el.offsetWidth; el.classList.add('screen-enter');
+  }
+  _showOverlay(id) { document.getElementById(id).classList.remove('hidden'); }
+  _hideOverlay(id) { document.getElementById(id).classList.add('hidden'); }
   _updateMenuHiscore() { document.getElementById('menu-hiscore').textContent = this._hiscore.toLocaleString(); }
 
   _startGame(diffKey) {
     this._stopLoop();
-    this._hideOverlay('overlay-pause');
-    this._hideOverlay('overlay-gameover');
+    this._hideOverlay('overlay-pause'); this._hideOverlay('overlay-gameover');
     this._showScreen('screen-game');
     this._selectedDiff = diffKey;
-
     const diff = DIFFICULTIES[diffKey];
     document.getElementById('diff-label').textContent = diff.label;
     document.getElementById('diff-label').style.color = diff.color;
     document.getElementById('hud-best').textContent   = this._hiscore.toLocaleString();
 
-    const gameArea = document.querySelector('.game-area');
-    const sideW    = 64;
-    const availH   = gameArea.clientHeight || (window.innerHeight - 90);
-    const availW   = (gameArea.clientWidth  || window.innerWidth) - sideW * 2;
-    const cell     = Math.max(16, Math.min(Math.floor(availH / ROWS), Math.floor(availW / COLS)));
+    // Canvas sizing — derive from actual screen element dimensions
+    const screenEl  = document.getElementById('screen-game');
+    const topBar    = document.querySelector('.game-topbar');
+    const ctrlsEl   = document.getElementById('game-controls');
+    const boardWrap = document.getElementById('board-wrap');
+    const sideW     = 56;
+    const screenW   = screenEl.clientWidth  || window.innerWidth;
+    const screenH   = screenEl.clientHeight || window.innerHeight;
+    const topBarH   = topBar.offsetHeight   || 52;
+    const ctrlH     = ctrlsEl ? ctrlsEl.offsetHeight : 130;
+    const availW    = screenW - sideW * 2;
+    const availH    = screenH - topBarH - ctrlH - 16;
+    const cell      = Math.max(14, Math.min(Math.floor(availH / ROWS), Math.floor(availW / COLS)));
 
     const canvas = document.getElementById('canvas-main');
-    canvas.width  = cell * COLS;
-    canvas.height = cell * ROWS;
-    const boardWrap = document.getElementById('board-wrap');
-    boardWrap.style.width  = canvas.width  + 'px';
-    boardWrap.style.height = canvas.height + 'px';
+    canvas.width = cell * COLS; canvas.height = cell * ROWS;
+    boardWrap.style.width = canvas.width + 'px'; boardWrap.style.height = canvas.height + 'px';
 
     this._game     = new Game(diffKey);
     this._renderer = new Renderer(canvas, cell);
     this._fx       = new FXEngine(document.getElementById('fx-layer'), canvas);
     this._input    = new InputManager(canvas, {
-      moveLeft:       () => { if (this._paused) return; if (this._game.move(-1))  { this._sound.move(); this._haptic.light(); } },
-      moveRight:      () => { if (this._paused) return; if (this._game.move( 1))  { this._sound.move(); this._haptic.light(); } },
+      moveLeft:       () => { if (this._paused) return; if (this._game.move(-1)) { this._sound.move(); this._haptic.light(); } },
+      moveRight:      () => { if (this._paused) return; if (this._game.move( 1)) { this._sound.move(); this._haptic.light(); } },
       softDrop:       () => { if (this._paused) return; this._softDropping = true; },
       hardDrop:       () => { if (this._paused) return; this._doHardDrop(); },
       rotate:         (d) => { if (this._paused) return; if (this._game.rotate(d)) { this._sound.rotate(); this._haptic.light(); } },
@@ -572,80 +437,51 @@ class App {
       longPressEnd:   () => { this._softDropping = false; },
     });
     this._input.setCell(cell);
-    this._renderPreviews();
-    this._updateHUD();
-    this._paused  = false;
-    this._dropAcc = 0;
-    this._lastTs  = performance.now();
-    this._raf     = requestAnimationFrame(ts => this._loop(ts));
+    this._renderPreviews(); this._updateHUD();
+    this._paused = false; this._dropAcc = 0;
+    this._lastTs = performance.now();
+    this._raf = requestAnimationFrame(ts => this._loop(ts));
   }
 
   _loop(ts) {
     if (!this._paused) {
-      const dt = ts - this._lastTs;
-      this._dropAcc += dt;
-      const interval = this._softDropping
-        ? Math.min(60, this._game.dropInterval / 12)
-        : this._game.dropInterval;
+      const dt = ts - this._lastTs; this._dropAcc += dt;
+      const interval = this._softDropping ? Math.min(60, this._game.dropInterval/12) : this._game.dropInterval;
       while (this._dropAcc >= interval) {
         this._dropAcc -= interval;
-        const fell = this._game.softDrop();
-        if (!fell) { this._softDropping = false; this._doLock(); return; }
+        if (!this._game.softDrop()) { this._softDropping = false; this._doLock(); return; }
       }
     }
-    this._lastTs = ts;
-    this._draw();
+    this._lastTs = ts; this._draw();
     this._raf = requestAnimationFrame(ts2 => this._loop(ts2));
   }
 
   _doHardDrop() {
     const dropped = this._game.hardDrop();
-    this._sound.hardDrop();
-    this._haptic.heavy();
-    if (dropped > 4) {
-      this._fx.scorePopup(
-        this._renderer.canvas.width / 2,
-        this._game.current.y * this._renderer.cell,
-        '+' + (dropped * 2), '#ffd740'
-      );
-    }
+    this._sound.hardDrop(); this._haptic.heavy();
+    if (dropped > 4) this._fx.scorePopup(this._renderer.canvas.width/2, this._game.current.y*this._renderer.cell, '+' + (dropped*2), '#ffd740');
     this._doLock();
   }
 
   _doLock() {
     const { gameOver, cleared } = this._game.lock();
-    this._sound.lock();
-    this._haptic.medium();
+    this._sound.lock(); this._haptic.medium();
     if (cleared) {
       const cell = this._renderer.cell;
       this._fx.lineClearFlash(cleared.rows, cell);
       this._sound.lineClear(cleared.count);
       if (cleared.count === 4) { this._fx.screenShake(); this._haptic.success(); }
-      if (cleared.leveledUp)   { this._fx.levelUpPulse(); this._sound.levelUp(); this._haptic.success(); }
-      if (cleared.combo > 1)   {
-        this._fx.comboFlash();
-        this._fx.scorePopup(this._renderer.canvas.width / 2, this._renderer.canvas.height / 2, 'x' + cleared.combo + ' COMBO!', '#ffd740');
-      }
-      this._fx.scorePopup(
-        this._renderer.canvas.width / 2,
-        Math.max(0, (cleared.rows[0] || 0) * cell - 20),
-        '+' + cleared.gained.toLocaleString(), '#00ff88'
-      );
-      if (this._game.score > this._hiscore) {
-        this._hiscore = this._game.score;
-        localStorage.setItem('tetris-hiscore', this._hiscore);
-      }
+      if (cleared.leveledUp)  { this._fx.levelUpPulse(); this._sound.levelUp(); this._haptic.success(); }
+      if (cleared.combo > 1)  { this._fx.comboFlash(); this._fx.scorePopup(this._renderer.canvas.width/2, this._renderer.canvas.height/2, 'x'+cleared.combo+' COMBO!', '#ffd740'); }
+      this._fx.scorePopup(this._renderer.canvas.width/2, Math.max(0,(cleared.rows[0]||0)*cell-20), '+'+cleared.gained.toLocaleString(), '#00ff88');
+      if (this._game.score > this._hiscore) { this._hiscore = this._game.score; localStorage.setItem('tetris-hiscore', this._hiscore); }
     }
-    this._updateHUD();
-    this._renderPreviews();
+    this._updateHUD(); this._renderPreviews();
     if (gameOver) { this._endGame(); return; }
     this._raf = requestAnimationFrame(ts => this._loop(ts));
   }
 
-  _draw() {
-    const r = this._renderer, g = this._game;
-    r.clear(); r.drawGrid(); r.drawBoard(g.board); r.drawPiece(g.current, g.ghostY());
-  }
+  _draw() { const r = this._renderer, g = this._game; r.clear(); r.drawGrid(); r.drawBoard(g.board); r.drawPiece(g.current, g.ghostY()); }
 
   _renderPreviews() {
     this._renderer.drawPreview(document.getElementById('canvas-next'), this._game.next);
@@ -654,13 +490,12 @@ class App {
 
   _updateHUD() {
     const g = this._game;
-    document.getElementById('hud-score').textContent = g.score.toLocaleString();
-    document.getElementById('hud-level').textContent = g.level;
-    document.getElementById('hud-lines').textContent = g.lines;
+    document.getElementById('hud-score').textContent  = g.score.toLocaleString();
+    document.getElementById('hud-level').textContent  = g.level;
+    document.getElementById('hud-lines').textContent  = g.lines;
     document.getElementById('combo-count').textContent = g.combo;
     if (g.score > this._hiscore) {
-      this._hiscore = g.score;
-      localStorage.setItem('tetris-hiscore', this._hiscore);
+      this._hiscore = g.score; localStorage.setItem('tetris-hiscore', this._hiscore);
       document.getElementById('hud-best').textContent = this._hiscore.toLocaleString();
     }
   }
@@ -668,36 +503,27 @@ class App {
   _togglePause() {
     this._paused = !this._paused;
     if (this._paused) {
-      this._sound.uiClick();
-      const g = this._game;
+      this._sound.uiClick(); const g = this._game;
       document.getElementById('pause-score').textContent = g.score.toLocaleString();
       document.getElementById('pause-level').textContent = g.level;
       document.getElementById('pause-lines').textContent = g.lines;
       this._showOverlay('overlay-pause');
     } else {
-      this._hideOverlay('overlay-pause');
-      this._lastTs = performance.now();
+      this._hideOverlay('overlay-pause'); this._lastTs = performance.now();
     }
   }
 
   _endGame() {
-    this._stopLoop();
-    this._sound.gameOver();
-    this._haptic.heavy();
-    const g = this._game;
-    const isNewBest = g.score > 0 && g.score >= this._hiscore;
-    if (isNewBest) {
-      this._hiscore = g.score;
-      localStorage.setItem('tetris-hiscore', this._hiscore);
-    }
+    this._stopLoop(); this._sound.gameOver(); this._haptic.heavy();
+    const g = this._game, isNewBest = g.score > 0 && g.score >= this._hiscore;
+    if (isNewBest) { this._hiscore = g.score; localStorage.setItem('tetris-hiscore', this._hiscore); }
     document.getElementById('go-score').textContent = g.score.toLocaleString();
     document.getElementById('go-best').textContent  = this._hiscore.toLocaleString();
     document.getElementById('go-level').textContent = g.level;
     document.getElementById('go-lines').textContent = g.lines;
     const badge = document.getElementById('new-best-badge');
     isNewBest ? badge.classList.remove('hidden') : badge.classList.add('hidden');
-    this._updateMenuHiscore();
-    this._showOverlay('overlay-gameover');
+    this._updateMenuHiscore(); this._showOverlay('overlay-gameover');
   }
 
   _stopLoop() {

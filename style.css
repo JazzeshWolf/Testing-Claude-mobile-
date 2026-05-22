@@ -216,14 +216,15 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 #screen-game {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   background:
     radial-gradient(ellipse 100% 60% at 50% 0%, rgba(68,138,255,0.07) 0%, transparent 60%),
     var(--bg);
   justify-content: flex-start;
+  overflow: hidden;
 }
 
 /* ---- Top bar ---- */
@@ -265,12 +266,14 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   justify-content: center;
   gap: 0;
   min-height: 0;
-  padding: 6px 0;
+  padding: 4px 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* ---- Side panels ---- */
 #side-left, #side-right {
-  width: 64px;
+  width: 56px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -327,9 +330,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   overflow: hidden;
 }
 
-#canvas-main {
-  display: block;
-}
+#canvas-main { display: block; }
 
 #fx-layer {
   position: absolute;
@@ -338,14 +339,54 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   overflow: hidden;
 }
 
-/* ---- Gesture hint ---- */
-.gesture-hint {
+/* ---- Control buttons ---- */
+#game-controls {
   flex-shrink: 0;
-  text-align: center;
-  padding: 5px 0 8px;
-  font-size: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 12px max(env(safe-area-inset-bottom, 0px), 10px);
+  width: 100%;
+}
+
+.ctrl-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.ctrl-btn {
+  flex: 1;
+  max-width: 110px;
+  height: 54px;
+  background: rgba(68,138,255,0.08);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 1.3rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, transform 0.08s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ctrl-btn.wide {
+  max-width: 150px;
+  font-size: 0.7rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--text-dim);
+  gap: 6px;
+}
+
+.ctrl-btn:active,
+.ctrl-btn.pressed {
+  background: rgba(68,138,255,0.22);
+  border-color: var(--border-bright);
+  transform: scale(0.93);
+  color: var(--cyan);
 }
 
 /* =========================================================
@@ -365,10 +406,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   transition: opacity 0.2s ease;
   z-index: 100;
 }
-.overlay.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
+.overlay.hidden { opacity: 0; pointer-events: none; }
 
 .modal.glass {
   background: var(--glass);
@@ -382,9 +420,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  box-shadow:
-    0 0 40px rgba(68,138,255,0.2),
-    0 16px 48px rgba(0,0,0,0.6);
+  box-shadow: 0 0 40px rgba(68,138,255,0.2), 0 16px 48px rgba(0,0,0,0.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -413,17 +449,9 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   padding: 4px 0;
   border-bottom: 1px solid var(--border);
 }
-.ps-row span:last-child {
-  color: var(--text);
-  font-weight: 700;
-}
+.ps-row span:last-child { color: var(--text); font-weight: 700; }
 
-.modal-actions {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+.modal-actions { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 
 .new-best {
   background: linear-gradient(135deg, var(--yellow), var(--pink));
@@ -457,15 +485,9 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   box-shadow: 0 4px 20px rgba(68,138,255,0.4), 0 2px 8px rgba(170,68,255,0.3);
   transition: box-shadow 0.2s, transform 0.15s, opacity 0.2s;
 }
-.btn-primary:hover {
-  box-shadow: 0 6px 28px rgba(68,138,255,0.55), 0 3px 12px rgba(170,68,255,0.4);
-}
+.btn-primary:hover { box-shadow: 0 6px 28px rgba(68,138,255,0.55), 0 3px 12px rgba(170,68,255,0.4); }
 .btn-primary:active  { transform: scale(0.95); }
-.btn-primary:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  box-shadow: none;
-}
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
 
 .btn-secondary {
   width: 100%;
@@ -497,13 +519,10 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 .btn-ghost:active { transform: scale(0.95); }
 
 .btn-icon {
-  width: 40px;
-  height: 40px;
+  width: 40px; height: 40px;
   border-radius: 50%;
   font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   background: rgba(255,255,255,0.05);
   border: 1px solid var(--border);
   transition: background 0.2s, transform 0.15s;
@@ -515,7 +534,6 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 /* =========================================================
    FX ANIMATIONS
    ========================================================= */
-
 .score-popup {
   position: absolute;
   pointer-events: none;
@@ -528,9 +546,8 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   white-space: nowrap;
   z-index: 10;
 }
-
 @keyframes floatUp {
-  0%   { opacity: 1;   transform: translateX(-50%) translateY(0);     }
+  0%   { opacity: 1;   transform: translateX(-50%) translateY(0); }
   70%  { opacity: 0.9; transform: translateX(-50%) translateY(-32px); }
   100% { opacity: 0;   transform: translateX(-50%) translateY(-48px); }
 }
@@ -541,17 +558,13 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   pointer-events: none;
   animation: lineFlash 0.4s ease-out forwards;
 }
-
 @keyframes lineFlash {
   0%   { background: rgba(255,255,255,0.85); opacity: 1;   }
   40%  { background: rgba(0,229,255,0.6);   opacity: 0.8; }
   100% { background: transparent;           opacity: 0;   }
 }
 
-.shaking {
-  animation: screenShake 0.3s ease-out;
-}
-
+.shaking { animation: screenShake 0.3s ease-out; }
 @keyframes screenShake {
   0%,100% { transform: translateX(0); }
   15%     { transform: translateX(-5px); }
@@ -562,20 +575,14 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   90%     { transform: translateX(2px); }
 }
 
-.level-up-anim {
-  animation: levelPulse 0.6s ease-out;
-}
-
+.level-up-anim { animation: levelPulse 0.6s ease-out; }
 @keyframes levelPulse {
   0%   { box-shadow: 0 0 24px rgba(68,138,255,0.25), 0 0 48px rgba(68,138,255,0.1), inset 0 0 32px rgba(5,5,20,0.8); }
   35%  { box-shadow: 0 0 48px rgba(255,215,64,0.7),  0 0 80px rgba(255,215,64,0.4), inset 0 0 32px rgba(5,5,20,0.8); }
   100% { box-shadow: 0 0 24px rgba(68,138,255,0.25), 0 0 48px rgba(68,138,255,0.1), inset 0 0 32px rgba(5,5,20,0.8); }
 }
 
-.combo-anim {
-  animation: comboPulse 0.35s ease-out;
-}
-
+.combo-anim { animation: comboPulse 0.35s ease-out; }
 @keyframes comboPulse {
   0%   { transform: scale(1);    }
   40%  { transform: scale(1.45); }
