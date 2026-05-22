@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tetris">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <title>Tetris</title>
+</head>
+<body>
+  <div id="app">
+    <div id="header">
+      <div class="stat">
+        <span class="label">SCORE</span>
+        <span id="score">0</span>
+      </div>
+      <div class="stat">
+        <span class="label">LEVEL</span>
+        <span id="level">1</span>
+      </div>
+      <div class="stat">
+        <span class="label">LINES</span>
+        <span id="lines">0</span>
+      </div>
+      <div class="stat">
+        <span class="label">NEXT</span>
+        <canvas id="next-canvas"></canvas>
+      </div>
+    </div>
+
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="overlay" class="active">
+        <h1>TETRIS</h1>
+        <p>Tap canvas to rotate</p>
+        <p>Swipe left/right to move</p>
+        <p>Swipe down to drop</p>
+        <button id="start-btn">START GAME</button>
+      </div>
+    </div>
+
+    <div id="controls">
+      <div class="controls-row">
+        <button class="ctrl-btn" id="btn-left">&#9664;</button>
+        <button class="ctrl-btn" id="btn-rotate">&#8635;</button>
+        <button class="ctrl-btn" id="btn-right">&#9654;</button>
+      </div>
+      <div class="controls-row">
+        <button class="ctrl-btn wide" id="btn-down">&#9660; SOFT</button>
+        <button class="ctrl-btn wide" id="btn-drop">&#11015; DROP</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --border: #0f3460;
+  --accent: #e94560;
+  --text: #eaeaea;
+  --dim: #8888aa;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 360px;
+  padding: 6px;
+  height: 100svh;
+  height: 100dvh;
+}
+
+#header {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 4px;
+  flex-shrink: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.label {
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.stat > span:last-child {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+#next-canvas {
+  display: block;
+  margin-top: 2px;
+}
+
+#game-container {
+  position: relative;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: #050510;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(233, 69, 96, 0.15);
+}
+
+#game-canvas {
+  display: block;
+}
+
+#overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 2px;
+}
+
+#overlay.active {
+  display: flex;
+}
+
+#overlay h1 {
+  font-size: 38px;
+  letter-spacing: 6px;
+  color: var(--accent);
+  text-shadow: 0 0 24px var(--accent);
+}
+
+#overlay p {
+  color: var(--dim);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+#start-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+  box-shadow: 0 0 12px rgba(233, 69, 96, 0.4);
+}
+
+#start-btn:active {
+  opacity: 0.75;
+  transform: scale(0.97);
+}
+
+#controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  flex: 1;
+  justify-content: center;
+  padding-bottom: 4px;
+}
+
+.controls-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.ctrl-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  flex: 1;
+  max-width: 100px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.08s, color 0.08s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.ctrl-btn.wide {
+  max-width: 136px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  gap: 4px;
+}
+
+.ctrl-btn:active {
+  background: var(--border);
+  color: var(--accent);
+  transform: scale(0.95);
+}
