@@ -2,60 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#1a1a2e">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#05050f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Tetris">
+  <meta name="apple-mobile-web-app-title" content="TETRIS">
+  <title>TETRIS</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <title>Tetris</title>
 </head>
 <body>
   <div id="app">
-    <div id="header">
-      <div class="stat">
-        <span class="label">SCORE</span>
-        <span id="score">0</span>
-      </div>
-      <div class="stat">
-        <span class="label">LEVEL</span>
-        <span id="level">1</span>
-      </div>
-      <div class="stat">
-        <span class="label">LINES</span>
-        <span id="lines">0</span>
-      </div>
-      <div class="stat">
-        <span class="label">NEXT</span>
-        <canvas id="next-canvas"></canvas>
+
+    <!-- MENU SCREEN -->
+    <div id="screen-menu" class="screen active">
+      <div class="menu-inner">
+        <div id="logo" aria-label="TETRIS">
+          <span style="--i:0; --c:#00e5ff">T</span><span style="--i:1; --c:#448aff">E</span><span style="--i:2; --c:#aa44ff">T</span><span style="--i:3; --c:#ff2d78">R</span><span style="--i:4; --c:#ffd740">I</span><span style="--i:5; --c:#00ff88">S</span>
+        </div>
+        <div class="hiscore-display">
+          <span class="hs-label">BEST</span>
+          <span id="menu-hiscore">0</span>
+        </div>
+        <button id="btn-play" class="btn-primary">PLAY</button>
+        <button id="btn-sound" class="btn-icon" aria-label="Toggle sound">🔊</button>
       </div>
     </div>
 
-    <div id="game-container">
-      <canvas id="game-canvas"></canvas>
-      <div id="overlay" class="active">
-        <h1>TETRIS</h1>
-        <p>Tap canvas to rotate</p>
-        <p>Swipe left/right to move</p>
-        <p>Swipe down to drop</p>
-        <button id="start-btn">START GAME</button>
+    <!-- DIFFICULTY SCREEN -->
+    <div id="screen-difficulty" class="screen">
+      <div class="diff-inner">
+        <button id="btn-back" class="btn-back" aria-label="Back">&#8592; BACK</button>
+        <h2 class="diff-title">SELECT DIFFICULTY</h2>
+        <div class="diff-grid">
+          <div class="diff-card" data-diff="easy" tabindex="0" role="button" aria-pressed="false">
+            <div class="diff-name">EASY</div>
+            <div class="diff-desc">Relaxed pace<br>1× score</div>
+          </div>
+          <div class="diff-card" data-diff="normal" tabindex="0" role="button" aria-pressed="false">
+            <div class="diff-name">NORMAL</div>
+            <div class="diff-desc">Classic speed<br>1.5× score</div>
+          </div>
+          <div class="diff-card" data-diff="hard" tabindex="0" role="button" aria-pressed="false">
+            <div class="diff-name">HARD</div>
+            <div class="diff-desc">Fast drops<br>2× score</div>
+          </div>
+          <div class="diff-card" data-diff="insane" tabindex="0" role="button" aria-pressed="false">
+            <div class="diff-name">INSANE</div>
+            <div class="diff-desc">Blink &amp; lose<br>3× score</div>
+          </div>
+        </div>
+        <button id="btn-start" class="btn-primary" disabled>START</button>
       </div>
     </div>
 
-    <div id="controls">
-      <div class="controls-row">
-        <button class="ctrl-btn" id="btn-left">&#9664;</button>
-        <button class="ctrl-btn" id="btn-rotate">&#8635;</button>
-        <button class="ctrl-btn" id="btn-right">&#9654;</button>
+    <!-- GAME SCREEN -->
+    <div id="screen-game" class="screen">
+      <div class="game-topbar">
+        <div class="stat-group">
+          <span class="stat-label">SCORE</span>
+          <span class="stat-value" id="hud-score">0</span>
+        </div>
+        <div class="stat-group">
+          <span class="stat-label">BEST</span>
+          <span class="stat-value" id="hud-best">0</span>
+        </div>
+        <div class="stat-group">
+          <span class="stat-label">LEVEL</span>
+          <span class="stat-value" id="hud-level">1</span>
+        </div>
+        <div class="stat-group">
+          <span class="stat-label">LINES</span>
+          <span class="stat-value" id="hud-lines">0</span>
+        </div>
+        <button id="btn-pause" class="btn-icon" aria-label="Pause">&#9646;&#9646;</button>
       </div>
-      <div class="controls-row">
-        <button class="ctrl-btn wide" id="btn-down">&#9660; SOFT</button>
-        <button class="ctrl-btn wide" id="btn-drop">&#11015; DROP</button>
+
+      <div class="game-area">
+        <div id="side-left">
+          <div class="side-panel" id="hold-panel">
+            <div class="panel-label">HOLD</div>
+            <canvas id="canvas-hold" width="48" height="48"></canvas>
+          </div>
+          <div class="side-panel" id="combo-panel">
+            <div class="panel-label">COMBO</div>
+            <div id="combo-count">0</div>
+          </div>
+        </div>
+
+        <div id="board-wrap">
+          <canvas id="canvas-main"></canvas>
+          <div id="fx-layer"></div>
+        </div>
+
+        <div id="side-right">
+          <div class="side-panel" id="next-panel">
+            <div class="panel-label">NEXT</div>
+            <canvas id="canvas-next" width="48" height="48"></canvas>
+          </div>
+          <div class="side-panel" id="diff-label-panel">
+            <div class="panel-label">MODE</div>
+            <div id="diff-label">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gesture-hint">
+        <span>Tap to rotate &nbsp;|&nbsp; Swipe to move &nbsp;|&nbsp; Swipe down to drop</span>
       </div>
     </div>
-  </div>
+
+    <!-- PAUSE OVERLAY -->
+    <div id="overlay-pause" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Game paused">
+      <div class="modal glass">
+        <h2 class="modal-title">PAUSED</h2>
+        <div class="pause-stats">
+          <div class="ps-row"><span>Score</span><span id="pause-score">0</span></div>
+          <div class="ps-row"><span>Level</span><span id="pause-level">1</span></div>
+          <div class="ps-row"><span>Lines</span><span id="pause-lines">0</span></div>
+        </div>
+        <div class="modal-actions">
+          <button id="btn-resume" class="btn-primary">RESUME</button>
+          <button id="btn-restart" class="btn-secondary">RESTART</button>
+          <button id="btn-pause-menu" class="btn-ghost">MENU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME OVER OVERLAY -->
+    <div id="overlay-gameover" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Game over">
+      <div class="modal glass">
+        <h2 class="modal-title">GAME OVER</h2>
+        <div id="new-best-badge" class="new-best hidden">NEW BEST!</div>
+        <div class="go-stats">
+          <div class="ps-row"><span>Score</span><span id="go-score">0</span></div>
+          <div class="ps-row"><span>Best</span><span id="go-best">0</span></div>
+          <div class="ps-row"><span>Level</span><span id="go-level">1</span></div>
+          <div class="ps-row"><span>Lines</span><span id="go-lines">0</span></div>
+        </div>
+        <div class="modal-actions">
+          <button id="btn-play-again" class="btn-primary">PLAY AGAIN</button>
+          <button id="btn-go-menu" class="btn-ghost">MENU</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- #app -->
 
   <script src="game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
 </body>
 </html>
