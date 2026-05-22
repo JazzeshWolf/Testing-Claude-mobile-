@@ -648,7 +648,7 @@ class App {
     if (!this._paused) {
       const dt = ts - this._lastTs;
       this._dropAcc += dt;
-      const interval = this._softDropping ? Math.min(60, this._game.dropInterval / 12) : this._game.dropInterval;
+      const interval = this._softDropping ? Math.min(120, this._game.dropInterval / 4) : this._game.dropInterval;
       while (this._dropAcc >= interval) {
         this._dropAcc -= interval;
         const fell = this._game.softDrop();
