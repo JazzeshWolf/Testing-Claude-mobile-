@@ -200,10 +200,9 @@ class Renderer {
   drawGhost(x, y, color) {
     const { ctx, cell } = this;
     ctx.save();
-    ctx.globalAlpha   = 0.22;
-    ctx.strokeStyle   = color;
-    ctx.lineWidth     = 1.5;
-    ctx.strokeRect(x * cell + 1.5, y * cell + 1.5, cell - 3, cell - 3);
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle   = color;
+    ctx.fillRect(x * cell + 1, y * cell + 1, cell - 2, cell - 2);
     ctx.restore();
   }
   drawBoard(board) {
