@@ -266,7 +266,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   justify-content: center;
   gap: 0;
   min-height: 0;
-  padding: 4px 0;
+  padding: 8px 0 4px;
   width: 100%;
   overflow: hidden;
 }
@@ -559,7 +559,6 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
    FX ANIMATIONS
    ========================================================= */
 
-/* Score popup */
 .score-popup {
   position: absolute;
   pointer-events: none;
@@ -579,7 +578,6 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   100% { opacity: 0;   transform: translateX(-50%) translateY(-48px); }
 }
 
-/* Line flash */
 .line-flash {
   position: absolute;
   left: 0; right: 0;
@@ -593,7 +591,6 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   100% { background: transparent;           opacity: 0;   }
 }
 
-/* Screen shake */
 .shaking {
   animation: screenShake 0.3s ease-out;
 }
@@ -608,7 +605,6 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   90%     { transform: translateX(2px); }
 }
 
-/* Level up pulse */
 .level-up-anim {
   animation: levelPulse 0.6s ease-out;
 }
@@ -619,7 +615,6 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   100% { box-shadow: 0 0 24px rgba(68,138,255,0.25), 0 0 48px rgba(68,138,255,0.1), inset 0 0 32px rgba(5,5,20,0.8); }
 }
 
-/* Combo flash */
 .combo-anim {
   animation: comboPulse 0.35s ease-out;
 }
