@@ -160,28 +160,46 @@ class Renderer {
     this.canvas = canvas;
     this.ctx    = canvas.getContext('2d');
     this.cell   = cell;
+
+    // Grid: rendered once, blitted every frame
+    this._gridOff        = document.createElement('canvas');
+    this._gridOff.width  = canvas.width;
+    this._gridOff.height = canvas.height;
+    this._buildGrid();
+
+    // Board: re-rendered only when a piece locks
+    this._boardOff        = document.createElement('canvas');
+    this._boardOff.width  = canvas.width;
+    this._boardOff.height = canvas.height;
   }
-  clear() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  }
-  drawGrid() {
-    const { ctx, cell } = this;
+
+  _buildGrid() {
+    const ctx  = this._gridOff.getContext('2d');
+    const cell = this.cell;
     ctx.strokeStyle = 'rgba(100,120,255,0.035)';
     ctx.lineWidth   = 0.5;
-    for (let x = 0; x <= COLS; x++) {
-      ctx.beginPath(); ctx.moveTo(x * cell, 0); ctx.lineTo(x * cell, ROWS * cell); ctx.stroke();
-    }
-    for (let y = 0; y <= ROWS; y++) {
-      ctx.beginPath(); ctx.moveTo(0, y * cell); ctx.lineTo(COLS * cell, y * cell); ctx.stroke();
+    ctx.beginPath();
+    for (let x = 0; x <= COLS; x++) { ctx.moveTo(x * cell, 0); ctx.lineTo(x * cell, ROWS * cell); }
+    for (let y = 0; y <= ROWS; y++) { ctx.moveTo(0, y * cell); ctx.lineTo(COLS * cell, y * cell); }
+    ctx.stroke();
+  }
+
+  // Call after every lock; board is stable between locks
+  updateBoard(board) {
+    const bctx = this._boardOff.getContext('2d');
+    bctx.clearRect(0, 0, this._boardOff.width, this._boardOff.height);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const b = board[r][c];
+        if (b) this._cell(bctx, c, r, b.color);
+      }
     }
   }
-  drawBlock(x, y, color, glow, alpha = 1) {
-    const { ctx, cell } = this;
-    const px = x * cell, py = y * cell;
-    const s  = cell - 1;
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    if (glow) { ctx.shadowColor = glow; ctx.shadowBlur = 8; }
+
+  // Draw a single block to any context — no shadow (perf)
+  _cell(ctx, gx, gy, color) {
+    const cell = this.cell;
+    const px = gx * cell, py = gy * cell, s = cell - 1;
     ctx.fillStyle = color;
     ctx.fillRect(px + 0.5, py + 0.5, s, s);
     ctx.fillStyle = 'rgba(255,255,255,0.28)';
@@ -190,8 +208,18 @@ class Renderer {
     ctx.fillRect(px + 1, py + 1, Math.floor(s * 0.18), s - 2);
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.fillRect(px + 1, py + s - Math.floor(s * 0.22), s - 2, Math.floor(s * 0.22));
-    ctx.restore();
   }
+
+  clear() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  // Blit cached grid + board — called every frame
+  drawStatic() {
+    this.ctx.drawImage(this._gridOff,  0, 0);
+    this.ctx.drawImage(this._boardOff, 0, 0);
+  }
+
   drawGhost(x, y, color) {
     const { ctx, cell } = this;
     ctx.save();
@@ -200,14 +228,7 @@ class Renderer {
     ctx.fillRect(x * cell + 1, y * cell + 1, cell - 2, cell - 2);
     ctx.restore();
   }
-  drawBoard(board) {
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const cell = board[r][c];
-        if (cell) this.drawBlock(c, r, cell.color, cell.glow);
-      }
-    }
-  }
+
   drawPiece(piece, ghostY) {
     piece.shape.forEach((row, dr) => {
       row.forEach((v, dc) => {
@@ -218,16 +239,16 @@ class Renderer {
     piece.shape.forEach((row, dr) => {
       row.forEach((v, dc) => {
         if (!v) return;
-        this.drawBlock(piece.x + dc, piece.y + dr, piece.color, piece.glow);
+        this._cell(this.ctx, piece.x + dc, piece.y + dr, piece.color);
       });
     });
   }
+
   drawPreview(canvas, piece) {
     if (!piece) return;
     const ctx  = canvas.getContext('2d');
     const cell = Math.floor(Math.min(canvas.width / 4, canvas.height / 4));
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!piece) return;
     const shape = piece.shape;
     const rows  = shape.length, cols = shape[0].length;
     const ox    = Math.floor((canvas.width  - cols * cell) / 2);
@@ -236,13 +257,10 @@ class Renderer {
       row.forEach((v, c) => {
         if (!v) return;
         const px = ox + c * cell, py = oy + r * cell, s = cell - 1;
-        ctx.save();
-        ctx.shadowColor = piece.glow; ctx.shadowBlur = 6;
-        ctx.fillStyle   = piece.color;
+        ctx.fillStyle = piece.color;
         ctx.fillRect(px, py, s, s);
         ctx.fillStyle = 'rgba(255,255,255,0.25)';
         ctx.fillRect(px, py, s, Math.floor(s * 0.28));
-        ctx.restore();
       });
     });
   }
@@ -324,16 +342,21 @@ class InputManager {
       this._h.longPressEnd && this._h.longPressEnd();
       return;
     }
+
     const dt  = Date.now() - this._tt;
     const dx  = (e.changedTouches[0]?.clientX ?? this._tx) - this._tx;
     const dy  = (e.changedTouches[0]?.clientY ?? this._ty) - this._ty;
     const adx = Math.abs(dx), ady = Math.abs(dy);
     const threshold = this._cell * 0.8;
+
     if (dt < 250 && adx < threshold && ady < threshold) {
+      // Tap: 2-finger = CCW, 1-finger = CW
       this._h.rotate(this._fingers >= 2 ? -1 : 1);
       return;
     }
+
     if (adx > ady) {
+      // Horizontal swipe — step by cell widths
       const steps = Math.round(adx / (this._cell || 24));
       for (let i = 0; i < Math.max(1, steps); i++) {
         dx < 0 ? this._h.moveLeft() : this._h.moveRight();
@@ -498,9 +521,13 @@ class App {
     this._updateMenuHiscore();
   }
 
+  // ---- UI wiring ----
   _initUI() {
+    // Menu
     document.getElementById('btn-play').addEventListener('click',  () => { this._sound.uiClick(); this._showScreen('screen-difficulty'); });
     document.getElementById('btn-sound').addEventListener('click', () => { const on = this._sound.toggle(); document.getElementById('btn-sound').textContent = on ? '🔊' : '🔇'; this._sound.uiClick(); });
+
+    // Difficulty
     document.getElementById('btn-back').addEventListener('click', () => { this._sound.uiClick(); this._showScreen('screen-menu'); });
     document.querySelectorAll('.diff-card').forEach(card => {
       card.addEventListener('click', () => {
@@ -516,15 +543,22 @@ class App {
       this._sound.uiClick();
       this._startGame(this._selectedDiff);
     });
+
+    // In-game
     document.getElementById('btn-pause').addEventListener('click', () => this._togglePause());
+
+    // Pause overlay
     document.getElementById('btn-resume').addEventListener('click',     () => { this._sound.uiClick(); this._togglePause(); });
     document.getElementById('btn-restart').addEventListener('click',    () => { this._sound.uiClick(); this._startGame(this._selectedDiff); });
     document.getElementById('btn-pause-menu').addEventListener('click', () => { this._sound.uiClick(); this._stopLoop(); this._showScreen('screen-menu'); this._hideOverlay('overlay-pause'); });
+
+    // Gameover overlay
     document.getElementById('btn-play-again').addEventListener('click', () => { this._sound.uiClick(); this._startGame(this._selectedDiff); });
     document.getElementById('btn-go-menu').addEventListener('click',    () => { this._sound.uiClick(); this._showScreen('screen-menu'); this._hideOverlay('overlay-gameover'); });
   }
 
   _initGameControls() {
+    // DAS: immediate action + repeat after 170ms delay, every 55ms
     const makeDAS = (fn) => {
       let dasTimer = null, dasInterval = null;
       const start = () => {
@@ -534,8 +568,10 @@ class App {
       const stop = () => { clearTimeout(dasTimer); clearInterval(dasInterval); };
       return { start, stop };
     };
+
     const left  = makeDAS(() => { if (this._game && !this._paused) { if (this._game.move(-1))  { this._sound.move(); this._haptic.light(); } } });
     const right = makeDAS(() => { if (this._game && !this._paused) { if (this._game.move( 1))  { this._sound.move(); this._haptic.light(); } } });
+
     const bind = (id, down, up) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -546,6 +582,7 @@ class App {
       el.addEventListener('pointerleave', onUp);
       el.addEventListener('pointercancel',onUp);
     };
+
     bind('ctrl-left',   left.start,  left.stop);
     bind('ctrl-right',  right.start, right.stop);
     bind('ctrl-rotate', () => { if (this._game && !this._paused) { if (this._game.rotate(1)) { this._sound.rotate(); this._haptic.light(); } } }, null);
@@ -573,6 +610,7 @@ class App {
     document.getElementById('menu-hiscore').textContent = this._hiscore.toLocaleString();
   }
 
+  // ---- Game startup ----
   _startGame(diffKey) {
     this._stopLoop();
     this._hideOverlay('overlay-pause');
@@ -585,8 +623,8 @@ class App {
     document.getElementById('diff-label').style.color  = diff.color;
     document.getElementById('hud-best').textContent    = this._hiscore.toLocaleString();
 
-    this._game         = new Game(diffKey);
-    this._paused       = false;
+    this._game    = new Game(diffKey);
+    this._paused  = false;
     this._softDropping = false;
 
     // Double RAF: wait for screen transition + safe-area layout to fully settle
@@ -606,6 +644,7 @@ class App {
       boardWrap.style.height = ch + 'px';
 
       this._renderer = new Renderer(canvas, cell);
+      this._renderer.updateBoard(this._game.board);
       this._fx       = new FXEngine(document.getElementById('fx-layer'), canvas);
       this._input    = new InputManager(canvas, {
         moveLeft:       () => { if (this._paused) return; if (this._game.move(-1)) { this._sound.move(); this._haptic.light(); } },
@@ -628,11 +667,11 @@ class App {
     }));
   }
 
+  // ---- Game loop ----
   _loop(ts) {
     if (!this._paused) {
       const dt = ts - this._lastTs;
       this._dropAcc += dt;
-      // Soft drop = 2x normal gravity (never faster than 80ms)
       const interval = this._softDropping ? Math.max(this._game.dropInterval / 2, 80) : this._game.dropInterval;
       while (this._dropAcc >= interval) {
         this._dropAcc -= interval;
@@ -658,8 +697,10 @@ class App {
 
   _doLock() {
     const { gameOver, cleared } = this._game.lock();
+    this._renderer.updateBoard(this._game.board);
     this._sound.lock();
     this._haptic.medium();
+
     if (cleared) {
       const cell = this._renderer.cell;
       this._fx.lineClearFlash(cleared.rows, cell);
@@ -685,22 +726,25 @@ class App {
         '+' + cleared.gained.toLocaleString(),
         '#00ff88'
       );
+      // Live hiscore update
       if (this._game.score > this._hiscore) {
         this._hiscore = this._game.score;
         localStorage.setItem('tetris-hiscore', this._hiscore);
       }
     }
+
     this._updateHUD();
     this._renderPreviews();
+
     if (gameOver) { this._endGame(); return; }
     this._raf = requestAnimationFrame(ts => this._loop(ts));
   }
 
+  // ---- Drawing ----
   _draw() {
     const r = this._renderer, g = this._game;
     r.clear();
-    r.drawGrid();
-    r.drawBoard(g.board);
+    r.drawStatic();
     r.drawPiece(g.current, g.ghostY());
   }
 
@@ -710,6 +754,7 @@ class App {
     r.drawPreview(document.getElementById('canvas-hold'), g.heldPiece);
   }
 
+  // ---- HUD ----
   _updateHUD() {
     const g = this._game;
     document.getElementById('hud-score').textContent = g.score.toLocaleString();
@@ -723,6 +768,7 @@ class App {
     }
   }
 
+  // ---- Pause ----
   _togglePause() {
     this._paused = !this._paused;
     if (this._paused) {
@@ -738,6 +784,7 @@ class App {
     }
   }
 
+  // ---- Game over ----
   _endGame() {
     this._stopLoop();
     this._sound.gameOver();
